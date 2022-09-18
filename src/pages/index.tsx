@@ -1,9 +1,12 @@
 import type { NextPage } from "next";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import { trpc } from "../utils/trpc";
 
 const Home: NextPage = () => {
   const hello = trpc.useQuery(["example.hello", { text: "from tRPC" }]);
+
+  const { data: session } = useSession()
 
   return (
     <>
@@ -14,6 +17,16 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
+        {
+          session
+          ? <div>
+              {session.user?.name}
+              <img src={session.user?.image} />
+              <button onClick={() => signOut()}>Sign out</button>
+            </div>
+          : <button onClick={() => signIn()}>Sign in</button>
+        }
+
         <h1 className="text-5xl md:text-[5rem] leading-normal font-extrabold text-gray-700">
           Create <span className="text-purple-300">T3</span> App
         </h1>
