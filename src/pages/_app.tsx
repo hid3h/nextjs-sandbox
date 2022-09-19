@@ -7,15 +7,33 @@ import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import type { AppRouter } from "../server/router";
 import "../styles/globals.css";
+import { createClient, configureChains, chain, WagmiConfig } from 'wagmi'
+import { publicProvider } from 'wagmi/providers/public'
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
+
+// https://wagmi.sh/docs/providers/public
+const { chains, provider } = configureChains(
+  [chain.mainnet, chain.polygon],
+  [publicProvider()]
+)
+
+const client = createClient({
+  connectors: [
+    new MetaMaskConnector({ chains })
+  ],
+  provider,
+})
 
 const MyApp: AppType = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
   return (
-    <SessionProvider session={session}>
-      <Component {...pageProps} />
-    </SessionProvider>
+    <WagmiConfig client={client}>
+      <SessionProvider session={session}>
+        <Component {...pageProps} />
+      </SessionProvider>
+    </WagmiConfig>
   );
 };
 

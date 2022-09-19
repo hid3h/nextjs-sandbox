@@ -1,12 +1,42 @@
 import type { NextPage } from "next";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import { trpc } from "../utils/trpc";
+import { SiweMessage } from 'siwe'
+import { useAccount, useConnect, useNetwork, useSignMessage } from 'wagmi'
 
 const Home: NextPage = () => {
   const hello = trpc.useQuery(["example.hello", { text: "from tRPC" }]);
 
   const { data: session } = useSession()
+
+  // https://wagmi.sh/docs/hooks/useConnect
+  const { connectAsync, data: connectData, connectors } = useConnect()
+  const { data, error, signMessage }  = useSignMessage()
+
+  // handleLoginなどは、https://github.com/spruceid/siwe-next-auth-example/blob/main/pages/siwe.tsx のサンプルを参考
+  const handleLogin = async() => {
+    return
+    const connector  = connectors[0]
+    const res = await connectAsync({ connector });
+
+    const message = new SiweMessage({
+      domain: window.location.host,
+      address: res.account,
+      statement: 'Sign in with Ethereum to the app.',
+      uri: window.location.origin,
+      version: '1',
+      chainId: res.chain.id,
+      nonce: await getCsrfToken()
+    });
+
+    // サンプルと違って値がvoidに変わってる.useSignMessageからdata, errorは取得しておくのかな
+    await signMessage({ message: message.prepareMessage() });
+
+    console.log("data", data)
+    const callbackUrl = '/protected';
+    signIn('credentials', { message: JSON.stringify(message), redirect: false, data, callbackUrl });
+  }
 
   return (
     <>
@@ -24,7 +54,17 @@ const Home: NextPage = () => {
               <img src={session.user?.image} />
               <button onClick={() => signOut()}>Sign out</button>
             </div>
-          : <button onClick={() => signIn()}>Sign in</button>
+          : <div>
+              <button onClick={() => signIn()}>Sign in</button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleLogin()
+                }}
+              >
+                MetaMask Sign-in
+              </button>
+            </div>
         }
 
         <h1 className="text-5xl md:text-[5rem] leading-normal font-extrabold text-gray-700">
