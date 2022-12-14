@@ -1,3 +1,3 @@
-export default function Example2() {
+export default function NonProtected() {
   return <div>signinしてなくても見れるページ</div>
 }
