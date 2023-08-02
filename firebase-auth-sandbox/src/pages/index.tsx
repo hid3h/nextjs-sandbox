@@ -3,8 +3,12 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   signInWithEmailAndPassword,
+  checkActionCode,
+  applyActionCode,
 } from "firebase/auth";
 import { api } from "~/utils/api";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
   const firebaseConfig: FirebaseOptions = {
@@ -13,11 +17,26 @@ export default function Home() {
   };
   initializeApp(firebaseConfig);
 
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  // const hello = api.example.hello.useQuery({ text: "from tRPC" });
 
-  const auth = getAuth();
   const email = process.env.NEXT_PUBLIC_EXAMPLE_EMAIL || "";
   const password = process.env.NEXT_PUBLIC_EXAMPLE_PASSWORD || "";
+  const auth = getAuth();
+
+  const searchParams = useSearchParams();
+  const actionCode = searchParams.get("oobCode");
+
+  useEffect(() => {
+    if (actionCode) {
+      checkActionCode(auth, actionCode).then((info) => {
+        console.log("info", info);
+
+        applyActionCode(auth, actionCode).catch((error) => {
+          console.log("error", error);
+        });
+      });
+    }
+  }, [actionCode]);
 
   const handleSignUp = async () => {
     createUserWithEmailAndPassword(auth, email, password)

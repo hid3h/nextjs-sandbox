@@ -17,8 +17,8 @@ export const exampleRouter = createTRPCRouter({
       }
       const authAdmin = admin.auth();
       const email = process.env.NEXT_PUBLIC_EXAMPLE_EMAIL || "";
-      // const link = await authAdmin.generateEmailVerificationLink(email);
-      // console.log("link", link);
+      const link = await authAdmin.generateEmailVerificationLink(email);
+      console.log("link", link);
       return {
         greeting: `Hello ${input.text}`,
       };
